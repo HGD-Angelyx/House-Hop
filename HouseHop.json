@@ -1,0 +1,17 @@
+{
+  "Name": "HouseHop",
+  "Author": "YourNameHere",
+  "Punchline": "Teleport directly to FC houses, chambers, and apartments via Lifestream.",
+  "Description": "Teleport directly to FC houses, private chambers, and apartments using Lifestream IPC. Housing data is collected passively as you visit zones.",
+  "InternalName": "HouseHop",
+  "AssemblyVersion": "0.1.0.0",
+  "ApplicableVersion": "any",
+  "DalamudApiLevel": 13,
+  "Tags": ["housing", "teleport", "utility", "lifestream"],
+  "IconUrl": "",
+  "RepoUrl": "https://github.com/yourname/HouseHop",
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": true,
+  "SupportsProfiles": true
+}
