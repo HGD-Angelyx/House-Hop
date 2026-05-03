@@ -1,70 +1,62 @@
-using Dalamud.Plugin;
-using Dalamud.Plugin.Ipc;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using System;
 
 namespace HouseHop;
 
-/// <summary>
-/// Wraps Lifestream's IPC gate for direct house teleportation.
-///
-/// Lifestream's HouseVisit gate signature:
-///   void HouseVisit(string district, int ward, int plot, int room, bool isApartment)
-///
-/// Falls back to Lifestream's /li text command if IPC is unavailable.
-/// </summary>
 public class LifestreamIpc : IDisposable
 {
-    private ICallGateSubscriber<string, int, int, int, bool, object?>? _houseVisit;
-    public bool IsAvailable { get; private set; }
-
-    public LifestreamIpc(IDalamudPluginInterface pi)
-    {
-        try
-        {
-            _houseVisit = pi.GetIpcSubscriber<string, int, int, int, bool, object?>(
-                "Lifestream.HouseVisit");
-
-            pi.GetIpcSubscriber<object?>("Lifestream.Available")
-              .Subscribe(_ => IsAvailable = true);
-            pi.GetIpcSubscriber<object?>("Lifestream.Unavailable")
-              .Subscribe(_ => IsAvailable = false);
-
-            // Try a dummy call to check availability without side effects
-            IsAvailable = true;
-        }
-        catch (Exception ex)
-        {
-            HouseHop.Log.Warning(ex, "[HouseHop] Lifestream IPC not available.");
-            IsAvailable = false;
-        }
-    }
-
+    public bool IsAvailable => true;
     public void Dispose() { }
 
     public void GoToHouse(HousingEntry entry)
     {
-        if (_houseVisit == null || !IsAvailable)
-        {
-            HouseHop.ChatGui.PrintError("[HouseHop] Lifestream is not available. Please install and enable it.");
-            return;
-        }
-
         try
         {
-            _houseVisit.InvokeAction(
-                entry.District,
-                entry.Ward,
-                entry.Plot,
-                entry.Room,
-                entry.IsApartment);
+            string district = ToLifestreamDistrict(entry.District);
+            string cmd;
 
-            HouseHop.Log.Information(
-                $"[HouseHop] Teleporting to {entry.OwnerName} — {entry.FriendlyLocation}");
+            if (entry.Type == HousingType.Apartment)
+                cmd = $"/li {district} w{entry.Ward} apt r{entry.Room}";
+            else if (entry.Type == HousingType.PrivateChamber)
+                cmd = $"/li {district} w{entry.Ward} p{entry.Plot} r{entry.Room}";
+            else
+                cmd = $"/li {district} w{entry.Ward} p{entry.Plot}";
+
+            // Append world if different from current world
+            if (!string.IsNullOrWhiteSpace(entry.World))
+            {
+                // LocalPlayer moved to ObjectTable[0] in Dalamud 15
+                string? currentWorld = null;
+                if (HouseHop.ObjectTable[0] is IPlayerCharacter lp)
+                    currentWorld = lp.CurrentWorld.Value.Name.ToString();
+
+                if (!entry.World.Equals(currentWorld, StringComparison.OrdinalIgnoreCase))
+                    cmd += $" @ {entry.World}";
+            }
+
+            // SendMessage was removed — use ICommandManager.ProcessCommand instead
+            bool sent = HouseHop.CommandManager.ProcessCommand(cmd);
+            if (!sent)
+            {
+                // /li is a Lifestream command, not a Dalamud one, so ProcessCommand
+                // returns false but still forwards it to the game. Print feedback either way.
+                HouseHop.Log.Information($"[HouseHop] Sent to game: {cmd}");
+            }
         }
         catch (Exception ex)
         {
-            HouseHop.Log.Error(ex, "[HouseHop] Teleport failed.");
-            HouseHop.ChatGui.PrintError($"[HouseHop] Teleport failed: {ex.Message}");
+            HouseHop.Log.Error(ex, "[HouseHop] Failed to send Lifestream command.");
+            HouseHop.ChatGui.PrintError($"[HouseHop] Failed: {ex.Message}");
         }
     }
+
+    private static string ToLifestreamDistrict(string district) => district switch
+    {
+        "Mist"         => "Mist",
+        "TheGoblet"    => "Goblet",
+        "LavenderBeds" => "Lavender",
+        "Shirogane"    => "Shirogane",
+        "Empyreum"     => "Empyreum",
+        _              => district
+    };
 }

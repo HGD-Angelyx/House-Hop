@@ -1,0 +1,4 @@
+/home/iwakura/Downloads/HouseHop/obj/Debug/net8.0-windows/HouseHop.GeneratedMSBuildEditorConfig.editorconfig
+/home/iwakura/Downloads/HouseHop/obj/Debug/net8.0-windows/HouseHop.AssemblyInfoInputs.cache
+/home/iwakura/Downloads/HouseHop/obj/Debug/net8.0-windows/HouseHop.AssemblyInfo.cs
+/home/iwakura/Downloads/HouseHop/obj/Debug/net8.0-windows/HouseHop.csproj.CoreCompileInputs.cache

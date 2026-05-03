@@ -11,7 +11,6 @@ public class HouseHopUI : IDisposable
 {
     private readonly HouseHop _plugin;
     private readonly WindowSystem _windowSystem = new("HouseHop");
-
     private readonly MainWindow _mainWindow;
     private readonly SettingsWindow _settingsWindow;
 
@@ -40,12 +39,10 @@ public class HouseHopUI : IDisposable
 public class MainWindow : Window, IDisposable
 {
     private readonly HouseHop _plugin;
-
     private string _searchInput = string.Empty;
 
     private static readonly Vector4 Gold  = new(0.78f, 0.66f, 0.43f, 1f);
     private static readonly Vector4 Green = new(0.23f, 0.55f, 0.20f, 1f);
-    private static readonly Vector4 Red   = new(0.70f, 0.25f, 0.25f, 1f);
 
     public MainWindow(HouseHop plugin)
         : base("HouseHop##main", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -53,8 +50,8 @@ public class MainWindow : Window, IDisposable
         _plugin = plugin;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(380, 320),
-            MaximumSize = new Vector2(580, 720)
+            MinimumSize = new Vector2(420, 320),
+            MaximumSize = new Vector2(640, 720)
         };
     }
 
@@ -76,14 +73,7 @@ public class MainWindow : Window, IDisposable
         ImGui.TextColored(Gold, "HouseHop");
         ImGui.SameLine();
         ImGui.TextDisabled("— housing teleporter via Lifestream");
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - 110);
-
-        if (_plugin.Lifestream.IsAvailable)
-            ImGui.TextColored(Green, "Lifestream: OK");
-        else
-            ImGui.TextColored(Red, "Lifestream: offline");
-
-        ImGui.SameLine();
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - 60);
         if (ImGui.SmallButton("Settings"))
             _plugin.UI.OpenSettings();
     }
@@ -91,7 +81,7 @@ public class MainWindow : Window, IDisposable
     private void DrawSearchBar()
     {
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-        ImGui.InputTextWithHint("##search", "Search character or FC name...", ref _searchInput, 64);
+        ImGui.InputTextWithHint("##search", "Search name, world, or FC...", ref _searchInput, 64);
     }
 
     private void DrawTabs()
@@ -117,7 +107,7 @@ public class MainWindow : Window, IDisposable
         {
             ImGui.Spacing();
             ImGui.TextDisabled(string.IsNullOrWhiteSpace(_searchInput)
-                ? $"No {TypeLabel(type)} entries yet — visit housing zones to collect data."
+                ? "No entries yet — use 'Add manually' below to add one."
                 : "No results match your search.");
             return;
         }
@@ -135,18 +125,18 @@ public class MainWindow : Window, IDisposable
         bool pinned = _plugin.Store.IsPinned(entry.OwnerName);
         if (pinned) { ImGui.TextColored(Gold, "★"); ImGui.SameLine(0, 4); }
 
+        // Name
         ImGui.TextColored(Gold, entry.OwnerName);
-        ImGui.SameLine();
-        ImGui.TextDisabled($"  {entry.FriendlyLocation}");
+        ImGui.SameLine(0, 6);
+        // Location + world
+        ImGui.TextDisabled(entry.FriendlyLocation);
 
-        float rightX = ImGui.GetContentRegionAvail().X;
-        ImGui.SameLine(rightX - 130);
+        // Buttons right-aligned
+        float avail = ImGui.GetContentRegionAvail().X;
+        ImGui.SameLine(avail - 148);
 
-        bool canTp = _plugin.Lifestream.IsAvailable;
-        if (!canTp) ImGui.BeginDisabled();
-        if (ImGui.SmallButton("Teleport##" + entry.OwnerName + entry.Room))
+        if (ImGui.SmallButton("Teleport##tp"))
             _plugin.Lifestream.GoToHouse(entry);
-        if (!canTp) ImGui.EndDisabled();
 
         ImGui.SameLine(0, 6);
         if (ImGui.SmallButton(pinned ? "Unpin##p" : "Pin##p"))
@@ -163,7 +153,7 @@ public class MainWindow : Window, IDisposable
 
     private void DrawFooter()
     {
-        ImGui.TextDisabled("Housing data is collected passively when you visit zones.");
+        ImGui.TextDisabled("Use 'Add manually' to record an address, then Teleport to go there via Lifestream.");
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - 100);
         if (ImGui.SmallButton("Add manually##add"))
             ImGui.OpenPopup("##manualentry");
@@ -173,27 +163,33 @@ public class MainWindow : Window, IDisposable
     // ── Manual add popup ──────────────────────────────────────────────────────
 
     private string _manName     = string.Empty;
+    private string _manWorld    = string.Empty;
     private int    _manDistrict = 0;
     private int    _manWard     = 1;
     private int    _manPlot     = 1;
     private int    _manRoom     = 0;
     private int    _manType     = 0;
 
-    private static readonly string[] Districts = { "Mist", "TheGoblet", "LavenderBeds", "Shirogane", "Empyreum" };
-    private static readonly string[] Types     = { "FC House", "Private Chamber", "Apartment" };
+    private static readonly string[] Districts     = { "Mist", "TheGoblet", "LavenderBeds", "Shirogane", "Empyreum" };
+    private static readonly string[] DistrictLabels = { "Mist", "The Goblet", "Lavender Beds", "Shirogane", "Empyreum" };
+    private static readonly string[] Types         = { "FC House", "Private Chamber", "Apartment" };
 
     private void DrawManualAddPopup()
     {
         if (!ImGui.BeginPopup("##manualentry")) return;
 
-        ImGui.TextColored(Gold, "Add entry manually");
+        ImGui.TextColored(Gold, "Add housing entry");
         ImGui.Separator();
+        ImGui.Spacing();
 
         ImGui.SetNextItemWidth(180);
-        ImGui.InputTextWithHint("##mname", "Owner / FC name", ref _manName, 64);
+        ImGui.InputTextWithHint("##mname", "Owner or FC name *", ref _manName, 64);
 
         ImGui.SetNextItemWidth(140);
-        ImGui.Combo("District##mc", ref _manDistrict, Districts, Districts.Length);
+        ImGui.InputTextWithHint("##mworld", "World (e.g. Ragnarok) *", ref _manWorld, 32);
+
+        ImGui.SetNextItemWidth(150);
+        ImGui.Combo("District##mc", ref _manDistrict, DistrictLabels, DistrictLabels.Length);
 
         ImGui.SetNextItemWidth(80);
         ImGui.InputInt("Ward##mw", ref _manWard);
@@ -207,15 +203,20 @@ public class MainWindow : Window, IDisposable
         ImGui.InputInt("Room (0 = main)##mr", ref _manRoom);
         _manRoom = Math.Max(0, _manRoom);
 
-        ImGui.SetNextItemWidth(140);
+        ImGui.SetNextItemWidth(150);
         ImGui.Combo("Type##mt", ref _manType, Types, Types.Length);
 
         ImGui.Spacing();
-        if (ImGui.Button("Add##madd") && !string.IsNullOrWhiteSpace(_manName))
+
+        bool canAdd = !string.IsNullOrWhiteSpace(_manName) && !string.IsNullOrWhiteSpace(_manWorld);
+        if (!canAdd) ImGui.BeginDisabled();
+
+        if (ImGui.Button("Add##madd"))
         {
             _plugin.Store.Upsert(new HousingEntry
             {
                 OwnerName   = _manName.Trim(),
+                World       = _manWorld.Trim(),
                 District    = Districts[_manDistrict],
                 Ward        = _manWard,
                 Plot        = _manPlot,
@@ -224,30 +225,32 @@ public class MainWindow : Window, IDisposable
                 Type        = (HousingType)_manType,
                 LastSeen    = DateTime.UtcNow
             });
-            _manName = string.Empty;
+            _manName  = string.Empty;
+            _manWorld = string.Empty;
             ImGui.CloseCurrentPopup();
         }
+
+        if (!canAdd) ImGui.EndDisabled();
+
         ImGui.SameLine();
         if (ImGui.Button("Cancel##mcancel")) ImGui.CloseCurrentPopup();
+
+        if (!canAdd)
+        {
+            ImGui.Spacing();
+            ImGui.TextDisabled("* Name and World are required.");
+        }
 
         ImGui.EndPopup();
     }
 
-    private static string TypeLabel(HousingType t) => t switch
-    {
-        HousingType.FcHouse        => "FC house",
-        HousingType.PrivateChamber => "private chamber",
-        HousingType.Apartment      => "apartment",
-        _                          => "housing"
-    };
-
     private static string FormatAge(DateTime lastSeen)
     {
-        var delta = DateTime.UtcNow - lastSeen;
-        if (delta.TotalMinutes < 1) return "just now";
-        if (delta.TotalHours   < 1) return $"{(int)delta.TotalMinutes}m ago";
-        if (delta.TotalDays    < 1) return $"{(int)delta.TotalHours}h ago";
-        return $"{(int)delta.TotalDays}d ago";
+        var d = DateTime.UtcNow - lastSeen;
+        if (d.TotalMinutes < 1) return "just now";
+        if (d.TotalHours   < 1) return $"{(int)d.TotalMinutes}m ago";
+        if (d.TotalDays    < 1) return $"{(int)d.TotalHours}h ago";
+        return $"{(int)d.TotalDays}d ago";
     }
 }
 
@@ -265,22 +268,21 @@ public class SettingsWindow : Window, IDisposable
 
     public override void Draw()
     {
-        ImGui.TextDisabled("HouseHop passively collects housing data as you visit zones.");
+        var gold = new Vector4(0.78f, 0.66f, 0.43f, 1f);
+
+        ImGui.TextWrapped("HouseHop teleports you to saved housing addresses via Lifestream's /li command.");
         ImGui.Spacing();
-        ImGui.TextWrapped("To teleport, Lifestream must be installed and loaded.");
+        ImGui.TextWrapped("Make sure Lifestream is installed and loaded, then add entries using 'Add manually' in the main window.");
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        ImGui.TextColored(new Vector4(0.78f, 0.66f, 0.43f, 1f), "Lifestream IPC status:");
+        ImGui.TextColored(gold, "Lifestream command:");
         ImGui.SameLine();
-        if (_plugin.Lifestream.IsAvailable)
-            ImGui.TextColored(new Vector4(0.23f, 0.55f, 0.20f, 1f), "Connected");
-        else
-            ImGui.TextColored(new Vector4(0.70f, 0.25f, 0.25f, 1f), "Not found");
+        ImGui.TextDisabled("/li <district> w<ward> p<plot> [r<room>] [@ <world>]");
 
         ImGui.Spacing();
-        ImGui.TextDisabled($"Known housing entries: {_plugin.Store.All.Count}");
+        ImGui.TextDisabled($"Known entries: {_plugin.Store.All.Count}");
         ImGui.Spacing();
 
         if (ImGui.Button("Clear all entries##clr"))

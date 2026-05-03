@@ -9,7 +9,7 @@
   "DalamudApiLevel": 15,
   "Tags": ["housing", "teleport", "utility", "lifestream"],
   "IconUrl": "",
-  "RepoUrl": "https://github.com/HGD-Angelyx/HouseHop",
+  "RepoUrl": "https://github.com/yourname/HouseHop",
   "LoadRequiredState": 0,
   "LoadSync": false,
   "CanUnloadAsync": true,

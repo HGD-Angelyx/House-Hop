@@ -12,6 +12,7 @@ public enum HousingType { FcHouse, PrivateChamber, Apartment }
 public class HousingEntry
 {
     public string OwnerName  { get; set; } = string.Empty;
+    public string World      { get; set; } = string.Empty;   // e.g. "Ragnarok"
     public string District   { get; set; } = string.Empty;
     public int    Ward       { get; set; }
     public int    Plot       { get; set; }
@@ -20,12 +21,22 @@ public class HousingEntry
     public HousingType Type  { get; set; }
     public DateTime LastSeen { get; set; } = DateTime.UtcNow;
 
-    public string FriendlyLocation =>
-        Type == HousingType.Apartment
-            ? $"{DistrictDisplay} · Apt. Bldg {Plot} · Room {Room}"
-            : Room > 0
-                ? $"{DistrictDisplay} · Ward {Ward} · Plot {Plot} · Room {Room}"
-                : $"{DistrictDisplay} · Ward {Ward} · Plot {Plot}";
+    public string FriendlyLocation
+    {
+        get
+        {
+            string world = string.IsNullOrWhiteSpace(World) ? "" : $" ({World})";
+            return Type switch
+            {
+                HousingType.Apartment =>
+                    $"{DistrictDisplay}{world} · Apt. Bldg {Plot} · Room {Room}",
+                HousingType.PrivateChamber =>
+                    $"{DistrictDisplay}{world} · Ward {Ward} · Plot {Plot} · Room {Room}",
+                _ =>
+                    $"{DistrictDisplay}{world} · Ward {Ward} · Plot {Plot}"
+            };
+        }
+    }
 
     private string DistrictDisplay => District switch
     {
@@ -61,7 +72,8 @@ public class HousingStore
         string.IsNullOrWhiteSpace(query)
             ? _config.KnownHousing.ToList()
             : _config.KnownHousing
-                     .Where(e => e.OwnerName.Contains(query, StringComparison.OrdinalIgnoreCase))
+                     .Where(e => e.OwnerName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                              || e.World.Contains(query, StringComparison.OrdinalIgnoreCase))
                      .ToList();
 
     public void Upsert(HousingEntry entry)
@@ -74,9 +86,14 @@ public class HousingStore
             && e.Room == entry.Room);
 
         if (existing != null)
+        {
             existing.LastSeen = DateTime.UtcNow;
+            existing.World = entry.World; // update world in case it changed
+        }
         else
+        {
             _config.KnownHousing.Add(entry);
+        }
 
         _config.Save();
     }

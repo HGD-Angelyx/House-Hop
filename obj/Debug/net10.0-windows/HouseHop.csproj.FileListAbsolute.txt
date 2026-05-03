@@ -1,0 +1,14 @@
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.csproj.AssemblyReference.cache
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.GeneratedMSBuildEditorConfig.editorconfig
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.AssemblyInfoInputs.cache
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.AssemblyInfo.cs
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.csproj.CoreCompileInputs.cache
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.sourcelink.json
+/home/iwakura/Downloads/HouseHop-v3/bin/Debug/net10.0-windows/HouseHop.json
+/home/iwakura/Downloads/HouseHop-v3/bin/Debug/net10.0-windows/HouseHop.deps.json
+/home/iwakura/Downloads/HouseHop-v3/bin/Debug/net10.0-windows/HouseHop.dll
+/home/iwakura/Downloads/HouseHop-v3/bin/Debug/net10.0-windows/HouseHop.pdb
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.dll
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/refint/HouseHop.dll
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/HouseHop.pdb
+/home/iwakura/Downloads/HouseHop-v3/obj/Debug/net10.0-windows/ref/HouseHop.dll
